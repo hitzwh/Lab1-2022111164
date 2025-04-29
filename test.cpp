@@ -370,62 +370,80 @@ pair<string, int> calcShortestPath(DirectedGraph graph, string word1, string wor
     return {pathStr, dist[word2]};
 }
 
-// 功能6：计算PageRank
-double calPageRank(const DirectedGraph& graph, const string& word) {
-    const double d = 0.85;
-    int N = graph.size();
-    map<string, double> pr, newPr;
+// 功能6 ：计算pagerank
+double calPageRank(const DirectedGraph& graph, const string& targetWord) {
+    const double d = 0.85;  // 阻尼系数
+    const int N = graph.size();
+    if (N == 0) return 0.0;
 
-    // 初始化PR值
-    for (const auto& node : graph) {
-        pr[node.first] = 1.0 / N;
-    }
+    // 预处理数据结构（关键优化）
+    // ----------------------------------------
+    unordered_map<string, vector<string>> inEdges;  // 反向邻接表
+    unordered_map<string, int> outDegree;           // 各节点出度
+    vector<string> danglingNodes;                   // 悬空节点集合
+    vector<string> allNodes;                        // 所有节点列表
 
-    vector<string> danglingNodes;
-    for (const auto& node : graph) {
-        if (node.second.empty()) {     
-            danglingNodes.push_back(node.first);    
+    // 初始化数据
+    for (const auto& [node, neighbors] : graph) {
+        allNodes.push_back(node);
+        outDegree[node] = neighbors.size();
+        if (neighbors.empty()) {
+            danglingNodes.push_back(node);
+        }
+        for (const auto& [neighbor, _] : neighbors) {
+            inEdges[neighbor].push_back(node);  // 建立反向索引
         }
     }
-    // 迭代直到收敛
+
+    // PR值存储优化
+    // ----------------------------------------
+    unordered_map<string, double> pr;
+    const double initialPR = 1.0 / N;
+    for (const auto& node : allNodes) {
+        pr[node] = initialPR;
+    }
+
+    // 迭代计算PR值
     for (int iter = 0; iter < 100; ++iter) {
+        unordered_map<string, double> newPr;
         double maxDiff = 0.0;
-        newPr.clear();
-        //对悬空节点的处理
-        //悬空节点的PR值由其余节点均摊
-        double danglingSum = 0.0;
-        for(const auto& dang : danglingNodes){
-            danglingSum += pr[dang];
-        }
-        double danglingContribution = (d * danglingSum) / N;
-        //遍历图中节点
-        for (const auto& node : graph) {
-            string u = node.first;
+
+        // 预计算悬空节点贡献
+        double danglingSum = accumulate(
+            danglingNodes.begin(), danglingNodes.end(), 0.0,
+            [&](double sum, const string& node) { return sum + pr[node]; }
+        );
+        const double danglingContribution = (d * danglingSum) / N;
+        for (int i = 0; i < allNodes.size(); ++i) {
+            const string& u = allNodes[i];
             double sum = 0.0;
-            //遍历寻找指向node的节点
-            for (const auto& inNode : graph) {
-                if (inNode.second.find(u) != inNode.second.end()) {
-                    int outDegree = inNode.second.size();
-                    sum += pr[inNode.first] / outDegree;
-                }           
+            
+            // 直接访问反向邻接表（避免全图遍历）
+            for (const string& v : inEdges[u]) {
+                sum += pr[v] / outDegree.at(v);
             }
-            newPr[u] = (1 - d) / N + d * sum + danglingContribution;
-            if(abs(pr[u]-newPr[u])>maxDiff){
-                maxDiff = abs(pr[u]-newPr[u]);
+
+            // 计算新PR值
+            const double newValue = (1 - d)/N + d * sum + danglingContribution;
+            newPr[u] = newValue;
+            
+            // 跟踪最大差值
+            const double diff = abs(pr[u] - newValue);
+            if (diff > maxDiff) {
+                maxDiff = diff;
             }
         }
-        if(abs(pr[word]-newPr[word])<small&&iter>=10){
-            return pr.find(word) != pr.end() ? pr[word] : 0.0;
+
+        // 提前收敛判断
+        if (iter >= 10 && maxDiff < small) {
+            pr = move(newPr);
+            break;
         }
-        pr = newPr;
-        double total = 0.0;
-        for(const auto& prVal : pr){
-            total += prVal.second;
-        }
-        cout<<iter+1<<": total pr "<<total<<endl;
+
+        pr = move(newPr);  // 移动语义减少拷贝开销
     }
 
-    return pr.find(word) != pr.end() ? pr[word] : 0.0;
+    return pr.count(targetWord) ? pr[targetWord] : 0.0;
 }
 
 // 功能7：随机游走
