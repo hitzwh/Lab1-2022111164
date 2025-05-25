@@ -1,0 +1,23 @@
+digraph G {
+    "and" -> "new" [label="2"];
+    "civilizations" -> "head" [label="1"];
+    "civilizations" -> "to" [label="1"];
+    "explore" -> "strange" [label="2", color="red", penwidth=2.0];
+    "explore" [style=filled, fillcolor=red];
+    "strange" [style=filled, fillcolor=red];
+    "head" -> "this" [label="1"];
+    "is" -> "b" [label="1"];
+    "life" -> "and" [label="2"];
+    "new" -> "civilizations" [label="2"];
+    "new" -> "life" [label="2"];
+    "new" -> "worlds" [label="2"];
+    "out" -> "new" [label="2"];
+    "seek" -> "out" [label="2"];
+    "strange" -> "new" [label="2"];
+    "this" -> "is" [label="1"];
+    "to" -> "explore" [label="2", color="red", penwidth=2.0];
+    "to" [style=filled, fillcolor=red];
+    "explore" [style=filled, fillcolor=red];
+    "to" -> "seek" [label="2"];
+    "worlds" -> "to" [label="2"];
+}
