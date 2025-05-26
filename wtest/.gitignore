@@ -1,0 +1,26 @@
+# Build directories
+build/
+out/
+
+# Coverage files
+*.gcno
+*.gcda
+coverage.htm
+
+# IDE files
+.vscode/
+.idea/
+
+# Compiled files
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+
+# CMake files
+CMakeCache.txt
+CMakeFiles/
+*.cmake
+!coverage.cmake
